@@ -1,0 +1,4 @@
+# Copy this to Replit Secrets
+
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.xxxxx.supabase.co:5432/postgres
+

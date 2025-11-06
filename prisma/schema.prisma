@@ -1,0 +1,139 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  entries   Entry[]
+  bets      Bet[]
+}
+
+model Entry {
+  id        String    @id @default(cuid())
+  userId    String
+  kind      EntryKind
+  text      String
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Bet {
+  id          String     @id @default(cuid())
+  userId      String
+  source      BetSource
+  statement   String
+  probability Float
+  status      BetStatus
+  outcome     Boolean?
+  createdAt   DateTime   @default(now())
+  resolvedAt  DateTime?
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum EntryKind {
+  journal
+  belief
+  note
+}
+
+enum BetSource {
+  personal
+  polymarket
+}
+
+enum BetStatus {
+  open
+  resolved
+}
+
+model DailyAgg {
+  id        String   @id @default(cuid())
+  userId    String
+  day       DateTime
+  wordFreq  String   // JSON array of {word, count}
+  betCounts String   // JSON object with {open, resolved}
+  brier     Float    @default(0)
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, day])
+  @@index([userId])
+  @@index([day])
+}
+
+model InsightsLlm {
+  id        String   @id @default(cuid())
+  userId    String
+  day       DateTime
+  payload   String   // JSON object with themes, assumptions, mood, biases, summary
+  createdAt DateTime @default(now())
+
+  @@unique([userId, day])
+  @@index([userId])
+  @@index([day])
+}
+
+model WalletLink {
+  id        String   @id @default(cuid())
+  userId    String
+  chain     String   // e.g., "ethereum", "polygon"
+  address   String   // wallet address
+  createdAt DateTime @default(now())
+
+  @@unique([userId, chain, address])
+  @@index([userId])
+  @@index([chain])
+}
+
+model ExternalPositionsRaw {
+  id        String   @id @default(cuid())
+  userId    String
+  source    String   // e.g., "polymarket"
+  payload   String   // full JSON response from API
+  fetchedAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([source])
+  @@index([fetchedAt])
+}
+
+model ExternalMarkets {
+  id           String   @id @default(cuid())
+  userId       String
+  source       String   // e.g., "polymarket"
+  marketId     String   // external market identifier
+  title        String   // market title
+  category     String?  // market category/tag
+  tags         String   // JSON array of tags
+  outcome      String?  // current prediction/outcome
+  size         Float    // position size
+  avgPrice     Float    // average entry price
+  currentValue Float    // current market value
+  pnl          Float    // profit/loss
+  resolved     Boolean  @default(false)
+  asOf         DateTime // timestamp of this data
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, source, marketId, asOf])
+  @@index([userId])
+  @@index([source])
+  @@index([marketId])
+  @@index([resolved])
+}
+
