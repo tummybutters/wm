@@ -1,4 +1,16 @@
-# Copy this to Replit Secrets
+# Environment Variables for WM
 
+# Database (Required)
 DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.xxxxx.supabase.co:5432/postgres
+
+# Supabase Auth (Required)
+# Get these from: Supabase Dashboard → Settings → API
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+
+# Optional: For AI Insights Worker
+# OPENAI_API_KEY=sk-...
+
+# Optional: For Polymarket Integration
+# POLYMARKET_API_KEY=...
 

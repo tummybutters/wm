@@ -1,5 +1,7 @@
 import dynamic from 'next/dynamic'
 import { prisma } from '@/lib/db'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { tokenize, getWordFrequencies } from '@/lib/text'
 import {
   Card,
@@ -22,14 +24,14 @@ const WordFrequencyChart = dynamic(
   { ssr: false }
 )
 
-async function getDashboardData() {
-  // Get demo user
+async function getDashboardData(userId: string) {
+  // Get the authenticated user
   const user = await prisma.user.findUnique({
-    where: { email: 'demo@example.com' },
+    where: { id: userId },
   })
 
   if (!user) {
-    throw new Error('Demo user not found')
+    throw new Error('User not found')
   }
 
   // Get all resolved bets for Brier score calculation
@@ -93,7 +95,16 @@ async function getDashboardData() {
 }
 
 export default async function DashboardPage() {
-  const data = await getDashboardData()
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/auth/signin')
+  }
+
+  const data = await getDashboardData(user.id)
 
   return (
     <div className="space-y-6">

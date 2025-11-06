@@ -11,11 +11,14 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
-  entries   Entry[]
-  bets      Bet[]
+  id                String   @id // Supabase Auth UUID
+  email             String   @unique
+  name              String?
+  polymarketWallet  String?
+  createdAt         DateTime @default(now())
+  entries           Entry[]
+  bets              Bet[]
+  walletLinks       WalletLink[]
 }
 
 model Entry {
@@ -93,6 +96,7 @@ model WalletLink {
   chain     String   // e.g., "ethereum", "polygon"
   address   String   // wallet address
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, chain, address])
   @@index([userId])

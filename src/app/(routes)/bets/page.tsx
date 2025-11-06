@@ -1,4 +1,6 @@
 import { prisma } from '@/lib/db'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import {
   Table,
   TableBody,
@@ -11,13 +13,13 @@ import { BetDialog } from './bet-dialog'
 import { ResolveBetDialog } from './resolve-bet-dialog'
 import { DeleteBetButton } from './delete-bet-button'
 
-async function getBets() {
+async function getBets(userId: string) {
   const user = await prisma.user.findUnique({
-    where: { email: 'demo@example.com' },
+    where: { id: userId },
   })
 
   if (!user) {
-    throw new Error('Demo user not found')
+    throw new Error('User not found')
   }
 
   const bets = await prisma.bet.findMany({
@@ -29,7 +31,16 @@ async function getBets() {
 }
 
 export default async function BetsPage() {
-  const bets = await getBets()
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/auth/signin')
+  }
+
+  const bets = await getBets(user.id)
 
   return (
     <div className="space-y-6">

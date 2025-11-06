@@ -1,4 +1,6 @@
 import { prisma } from '@/lib/db'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import {
   Table,
   TableBody,
@@ -11,13 +13,13 @@ import { Button } from '@/components/ui/button'
 import { EntryDialog } from './entry-dialog'
 import { DeleteEntryButton } from './delete-entry-button'
 
-async function getEntries(page: number = 1, pageSize: number = 20) {
+async function getEntries(userId: string, page: number = 1, pageSize: number = 20) {
   const user = await prisma.user.findUnique({
-    where: { email: 'demo@example.com' },
+    where: { id: userId },
   })
 
   if (!user) {
-    throw new Error('Demo user not found')
+    throw new Error('User not found')
   }
 
   const skip = (page - 1) * pageSize
@@ -42,8 +44,17 @@ export default async function EntriesPage({
 }: {
   searchParams: { page?: string }
 }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/auth/signin')
+  }
+
   const page = parseInt(searchParams.page || '1', 10)
-  const data = await getEntries(page)
+  const data = await getEntries(user.id, page)
   const totalPages = Math.ceil(data.total / data.pageSize)
 
   return (
